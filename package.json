@@ -1,0 +1,23 @@
+{
+  "name": "death-wall",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "webpack || node --harmony server.js",
+    "test": "mocha --harmony"
+  },
+  "dependencies": {
+    "http": "*",
+    "express": "*",
+    "socket.io": "*",
+    "body-parser": "*"
+  },
+  "devDependencies": {
+    "css-loader": "^0.13.2",
+    "jsx-loader": "^0.13.2",
+    "open": "*",
+    "strip-loader": "^0.1.0",
+    "style-loader": "^0.13.2",
+    "webpack": "*"
+  }
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+</head>
+
+<body>
+  <style media="screen">
+    .webdings {
+      font-family: webdings;
+    }
+table.ascii-lib {
+  border-width: 1px;
+  border-style: solid;
+  border-color: #000000;
+}
+    table.ascii-lib tr td {
+      display: inline-block;
+      border-width: 1px 1px 1px 1px;
+      border-style: solid;
+      border-color: #000000;
+      margin: 0px 0px 0px 0px;
+      padding: 0px 0px 0px 0px;
+      width: 30px;
+      height: 20px;
+      line-height: 20px;
+    }
+  </style>
+  <script type="text/javascript">
+    var characters = ".".repeat(10000)
+      .split("")
+      .map(function(value, key) {
+        var hexKey = key.toString(16);
+        var character = String.fromCharCode(key) || "&nbsp;"; //"\\u{" + hexKey + "}";
+        return `
+<tr>
+  <td>${key}</td>
+  <td>${hexKey}</td>
+  <td> ${character} </td>
+  <td class="webdings">${character} </td>
+</tr>
+  `;
+      }).join("");
+    document.write(`<table class="ascii-lib">${characters}</table>`);
+  </script>
+
+
+</body>
+
+</html>

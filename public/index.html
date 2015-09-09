@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <!-- Mobile support -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- socket.io -->
+  <script src="libs/socket.io/1.3.5/socket.io.js" type="text/javascript"></script>
+
+  <!-- React -->
+  <script src="/libs/react/0.13.3/react.js" type="text/javascript"></script>
+  <script src="/libs/react/0.13.3/JSXTransformer.js" type="text/javascript"></script>
+  <script src="/libs/react/0.13.3/jquery.min.js" type="text/javascript"></script>
+
+  <!-- Twitter Bootstrap -->
+  <link href="libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Material Design for Bootstrap -->
+  <link href="libs/bootstrap-material-design/0.3.0/css/roboto.min.css" rel="stylesheet">
+  <link href="libs/bootstrap-material-design/0.3.0/css/material-fullpalette.css" rel="stylesheet">
+  <link href="libs/bootstrap-material-design/0.3.0/css/ripples.min.css" rel="stylesheet">
+
+  <!-- Dropdown.js -->
+  <!-- <link href="//cdn.rawgit.com/FezVrasta/dropdown.js/master/jquery.dropdown.css" rel="stylesheet"> -->
+
+  <!-- jQuery -->
+  <!-- <script src="//code.jquery.com/jquery-1.10.2.min.js"></script> -->
+  <script src="libs/jquery/2.1.4/jquery.min.js" type="text/javascript"></script>
+  <style media="screen">
+    body,
+    body * {
+      font-family: monospace;
+    }
+
+    .header-panel {
+      height: 144px;
+      position: relative;
+      z-index: 3;
+    }
+    /*.header-panel h1 {
+      font-size: 20px;
+      font-weight: 400;
+      position: absolute;
+      bottom: 10px;
+      padding-left: 35px;
+    }*/
+
+    .pages {
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 4;
+      padding: 0;
+      overflow: auto;
+      margin: 115px;
+    }
+  </style>
+  <style media="screen">
+    .world-progress-display li {
+      list-style: none;
+    }
+
+    .world-progress-display .player-progress-display .player-progress-name-display {
+      display: inline-block;
+      width: 45%;
+    }
+
+    .world-progress-display .player-progress-display .player-progress-position-display {
+      display: inline-block;
+      width: 45%;
+      /*width: 0px;*/
+      /*text-align: right;*/
+      background-color: transparent;
+      font-size: 8px;
+      font-weight: 900;
+      height: 100%;
+      text-shadow: 3px 3px 5px rgba(0, 0, 0, 1)
+    }
+  </style>
+  <style media="screen">
+    /*.button.start-button {
+      font-family: Lucida Sans Unicode
+    }*/
+
+    .button {
+      cursor: pointer;
+    }
+
+    .button.start-button,
+    .button.restart-button,
+    .button.stop-button,
+    .button.pause-button {
+      font-family: webdings;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="world-control-display-container"></div>
+  <div id="world-status-display-container"></div>
+  <div id="world-progress-display-container"></div>
+
+</body>
+<script src="js/dist/main-bundle.js" type="text/javascript"></script>
+<!-- <script src="libs/lobrow.js" type="text/javascript"></script>
+<script type="text/javascript">
+  lobrow.onload(["./main"],
+    function(main) {
+      main.start();
+    });
+</script> -->
+
+
+
+
+
+
+
+
+
+
+</html>
