@@ -176,8 +176,8 @@
 	    var isReadyControl = (this.props.world.isReady
 	      ? React.createElement("input", {checked: "true", disabled: "true", name: "Ready", type: "checkbox"})
 	      : React.createElement("input", {checked: this.props.player.isReady, disabled: !this.props.isLocal, name: "Ready", onChange: this.props.onReady, type: "checkbox"}));
-
-	    var actControl = React.createElement("button", {disabled: !this.props.isLocal && this.props.world.isReady && this.props.player.isLiving, onClick: this.props.onAct}, "Act", !this.props.isLocal && this.props.world.isReady && this.props.player.isLiving)
+	    console.log('this.props.isLocal', this.props.isLocal, 'this.props.world.isReady', this.props.world.isReady, 'this.props.world.isReady', this.props.world.isReady, 'this.props.player.isLiving', this.props.player.isLiving, '!this.props.isLocal && this.props.world.isReady && this.props.player.isLiving', !this.props.isLocal && this.props.world.isReady && this.props.player.isLiving)
+	    var actControl = React.createElement("button", {disabled: !this.props.isLocal || !this.props.world.isReady || !this.props.player.isLiving, onClick: this.props.onAct}, "Act")
 
 	//console.log("deathWallPositionDisplay", deathWallPositionDisplay, deathWallPositionDisplay.length, deathWallPosition)
 	//console.log("playerPositionBeyondDeathWallDisplay", playerPositionBeyondDeathWallDisplay, playerPositionBeyondDeathWallDisplay.length, this.props.player.position, playerPositionBeyondDeathWall)

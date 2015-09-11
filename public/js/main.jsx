@@ -130,8 +130,8 @@ var PlayerProgressDisplay = React.createClass({
     var isReadyControl = (this.props.world.isReady
       ? <input checked="true" disabled="true" name="Ready" type="checkbox"/>
       : <input checked={this.props.player.isReady} disabled={!this.props.isLocal} name="Ready" onChange={this.props.onReady} type="checkbox"/>);
-
-    var actControl = <button disabled={!this.props.isLocal && this.props.world.isReady && this.props.player.isLiving} onClick={this.props.onAct}>Act{!this.props.isLocal && this.props.world.isReady && this.props.player.isLiving}</button>
+    console.log('this.props.isLocal', this.props.isLocal, 'this.props.world.isReady', this.props.world.isReady, 'this.props.world.isReady', this.props.world.isReady, 'this.props.player.isLiving', this.props.player.isLiving, '!this.props.isLocal && this.props.world.isReady && this.props.player.isLiving', !this.props.isLocal && this.props.world.isReady && this.props.player.isLiving)
+    var actControl = <button disabled={!this.props.isLocal || !this.props.world.isReady || !this.props.player.isLiving} onClick={this.props.onAct}>Act</button>
 
 //console.log("deathWallPositionDisplay", deathWallPositionDisplay, deathWallPositionDisplay.length, deathWallPosition)
 //console.log("playerPositionBeyondDeathWallDisplay", playerPositionBeyondDeathWallDisplay, playerPositionBeyondDeathWallDisplay.length, this.props.player.position, playerPositionBeyondDeathWall)

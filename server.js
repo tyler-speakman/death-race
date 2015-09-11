@@ -141,7 +141,7 @@ io.on('connection', function (socket) {
 
 });
 var timerId;
-var FRAMES_PER_SECOND = 1000 / 5;
+var FRAMES_PER_SECOND = 1000 / 10;
 
 function start() {
   if (timerId !== null && timerId !== undefined) {
