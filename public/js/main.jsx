@@ -40,11 +40,13 @@ var WorldStatusDisplay = React.createClass({
       style: 'percent'
     }).format(numberOfReadyPlayers / numberOfPlayers);
 
+    var isReadyDisplay = this.props.world.isReady
+      ? "[Ready]"
+      : "[Not ready]";
+
     return (
       <h2 className="world-status-display">
-        {this.props.world.isReady
-          ? "[Ready]"
-          : "[Not ready]"}
+        {isReadyDisplay}
         {percentageOfReadyPlayers}
       </h2>
     );
@@ -65,7 +67,7 @@ var PlayerProgressDisplay = React.createClass({
     var playerPositionBeyondDeathWallDisplay = "";
     if (playerPositionBeyondDeathWall > 0) {
 //var PLAYER_CHARACTERS = "∙•●。☉◎○◎☉。●•";//ｏＯ
-      var PLAYER_CHARACTERS = "\u{26a9}\u{26aa}\u{26ac}\u{26ad}\u{26ae}\u{26af}\u{26ae}\u{26ad}";//"︹︷︹︺︸︺";
+      var PLAYER_CHARACTERS = "\u{26a9}\u{26aa}\u{26ac}\u{26ad}\u{26ae}\u{26af}\u{26ae}\u{26ad}"; //"︹︷︹︺︸︺";
       var playerCharacterIndex = (iteration) % PLAYER_CHARACTERS.length;
       var playerDisplay = PLAYER_CHARACTERS[playerCharacterIndex];
       playerPositionBeyondDeathWallDisplay = NON_BREAKING_SPACE_CHARACTER.repeat(Math.max(0, playerPositionBeyondDeathWall - playerDisplay.length)) + playerDisplay;
@@ -114,26 +116,38 @@ var PlayerProgressDisplay = React.createClass({
   },
   render: function() {
 
+    var isReadyDisplay = (this.props.player.isReady
+      ? "[Ready]"
+      : "[Not ready]");
+    var isLivingDisplay = (this.props.player.isLiving
+      ? "[Alive]"
+      : "[Dead]");
+    var isLocalDisplay = (this.props.isLocal
+      ? "[You]"
+      : "[Not you]");
+    var positionDisplay = `[pos.: ${this.props.player.position}]`;
+    var rankDisplay = `[rank.: ${this.props.rank}]`;
+    var isReadyControl = (this.props.world.isReady
+      ? <input checked="true" disabled="true" name="Ready" type="checkbox"/>
+      : <input checked={this.props.player.isReady} disabled={!this.props.isLocal} name="Ready" onChange={this.props.onReady} type="checkbox"/>);
+
+    var actControl = <button disabled={!this.props.isLocal && this.props.world.isReady && this.props.player.isLiving} onClick={this.props.onAct}>Act{!this.props.isLocal && this.props.world.isReady && this.props.player.isLiving}</button>
+
 //console.log("deathWallPositionDisplay", deathWallPositionDisplay, deathWallPositionDisplay.length, deathWallPosition)
 //console.log("playerPositionBeyondDeathWallDisplay", playerPositionBeyondDeathWallDisplay, playerPositionBeyondDeathWallDisplay.length, this.props.player.position, playerPositionBeyondDeathWall)
     return (
       <li>
         <span className="player-progress-display">
           <span className="player-progress-name-display">
-            <span>{(this.props.player.isReady
-  ? "[Ready]"
-  : "[Not ready]")}</span>
-            <span>{(this.props.player.isLiving
-  ? "[Alive]"
-  : "[Dead]")}</span>
-  <span>{(this.props.isLocal
-? "[You]"
-: "[Not you]")}</span>
+            <span>{isReadyDisplay}</span>
+            <span>{isLivingDisplay}</span>
+            <span>{isLocalDisplay}</span>
+            <span>{positionDisplay}</span>
+            <span>{rankDisplay}</span>
             <span>{this.props.player.name}</span>
           </span>
-          {(this.props.world.isReady
-            ? <input checked="true" disabled="true" name="Ready" type="checkbox"/>
-            : <input checked={this.props.player.isReady} disabled={!this.props.isLocal} name="Ready" onChange={this.props.onReady} type="checkbox"/>)}
+          {isReadyControl}
+          {actControl}
 
           {this.props.player.isLiving
             ? this.renderPositionDisplay()
@@ -150,27 +164,43 @@ var WorldProgressDisplay = React.createClass({
     var worldProgressDisplay = this;
     var players = this.props.world.players;
     var sortedPlayers = players.sort(function(playerA, playerB) {
-      var positionRankFlag = -(playerA.position - playerB.position) / Math.max(playerA.position, playerB.position);
-      var isLivingRankFlag = (playerA.isLiving - playerB.isLiving)
-      var idRankFlag = (playerA.id - playerB.id);
+      var normalizeAndCompare = function(a, b) {
+        if (a < b) {
+          return -1;
+        } else if (a > b) {
+          return 1;
+        } else {
+          return 0;
+        }
+      };
+
+      var positionRankFlag = -normalizeAndCompare(playerA.position, playerB.position);
+      var isLivingRankFlag = -normalizeAndCompare(playerA.isLiving, playerB.isLiving);
+      var idRankFlag = normalizeAndCompare(playerA.id, playerB.id);
+
+// console.log('isLivingRankFlag', isLivingRankFlag, 'positionRankFlag', positionRankFlag, 'idRankFlag', idRankFlag, 'overall rank', (4 * isLivingRankFlag) + (2 * positionRankFlag) + (1 * idRankFlag));
 
       return (4 * isLivingRankFlag) + (2 * positionRankFlag) + (1 * idRankFlag);
     });
     var playerIndex = sortedPlayers.findIndex(function(player) {
       return worldProgressDisplay.props.socketId === player.id;
     });
-    var DISPLAY_RANGE = 5;
 
+    var DISPLAY_RANGE = 2;
     var sortedPlayersSubgroup = sortedPlayers.filter(function(player, index) {
-      return Math.abs(playerIndex - index) < DISPLAY_RANGE;
+      return Math.abs(playerIndex - index) <= DISPLAY_RANGE;
     });
     var maxPositionInPlayersSubgroup = sortedPlayersSubgroup.reduce(function(maxPosition, player) {
       return Math.max(maxPosition, player.position);
     }, this.props.world.deathWall.position);
 
     var playerProgressDisplays = sortedPlayersSubgroup.map(function(player, playerIndex) {
+      var playerRank = sortedPlayers.findIndex(function(sortedPlayer) {
+        return sortedPlayer.id === player.id;
+      });
+      console.log('playerRank', playerRank);
       return (
-        <PlayerProgressDisplay isLocal={worldProgressDisplay.props.socketId === player.id} key={player.id} maxPositionInPlayersSubgroup={maxPositionInPlayersSubgroup} onReady={worldProgressDisplay.props.onPlayerReady.bind(worldProgressDisplay, player)} player={player} world={worldProgressDisplay.props.world}/>
+        <PlayerProgressDisplay isLocal={worldProgressDisplay.props.socketId === player.id} key={player.id} maxPositionInPlayersSubgroup={maxPositionInPlayersSubgroup} onAct={worldProgressDisplay.props.onPlayerAct.bind(worldProgressDisplay, player)} onReady={worldProgressDisplay.props.onPlayerReady.bind(worldProgressDisplay, player)} player={player} rank={playerRank} world={worldProgressDisplay.props.world}/>
       );
     });
 
@@ -199,16 +229,20 @@ socket.on('world', function(tmpWorld) {
   var onWorldRestart = function(e) {
     console.log('onWorldRestart');
     socket.emit('world-restart');
-
-  }
+  };
 
   var onPlayerReady = function(player) {
     console.log('onPlayerReady', player);
-    socket.emit('player-ready');
-  }
+    socket.emit('player-ready', player.id);
+  };
+
+  var onPlayerAct = function(player) {
+    console.log('onPlayerAct', player);
+    socket.emit('player-act', player.id);
+  };
 
   React.render(<WorldControlDisplay onWorldRestart={onWorldRestart}/>, document.getElementById('world-control-display-container'));
   React.render(<WorldStatusDisplay world={tmpWorld}/>, document.getElementById('world-status-display-container'));
-  React.render(<WorldProgressDisplay onPlayerReady={onPlayerReady} socketId={socketId} world={tmpWorld}/>, document.getElementById('world-progress-display-container'));
+  React.render(<WorldProgressDisplay onPlayerAct={onPlayerAct} onPlayerReady={onPlayerReady} socketId={socketId} world={tmpWorld}/>, document.getElementById('world-progress-display-container'));
 
 });

@@ -1,4 +1,6 @@
 /*jslint node: true */
+/*jshint esnext: true */
+/*jslint devel: true */
 'use strict';
 
 
@@ -7,7 +9,7 @@ var
   open = require('open'),
   bodyParser = require('body-parser');
 
-var logger = require('logger');
+var logger = require('logger').instance();
 
 var express = require('express');
 var app = express();
@@ -28,7 +30,8 @@ var HumanPlayer = Player.Player,
   ArtificialPlayer = Player.ArtificialPlayer;
 
 var getNewWorld = function () {
-  var deathWallPlayer = ArtificialPlayer({
+  var deathWallPlayer = new ArtificialPlayer({
+    id: 'deathWallPlayer',
     act: Player.actFunctions.random,
     energy: -10
   });
@@ -37,75 +40,108 @@ var getNewWorld = function () {
 
 var world = getNewWorld();
 
-// // add human player
-// world.addPlayer(HumanPlayer({
-//   energy: 5
-// }));
-
 world.init();
 
-var numberOfArtificialPlayers = 50;
-for (var artificialPlayerIndex = 0; artificialPlayerIndex < numberOfArtificialPlayers; artificialPlayerIndex++) {
-  var artificialPlayer = ArtificialPlayer({
+var NUMBER_OF_ARTIFICIAL_PLAYERS = 50;
+for (var artificialPlayerIndex = 0; artificialPlayerIndex < NUMBER_OF_ARTIFICIAL_PLAYERS; artificialPlayerIndex++) {
+  var artificialPlayer = new ArtificialPlayer({
     act: Player.actFunctions.random,
-    energy: 0
   });
   artificialPlayer.ready();
   world.addPlayer(artificialPlayer);
 }
 
 io.on('connection', function (socket) {
-  logger.log('io', 'connected', socket.id);
+  logger.info('io', 'connected', socket.id);
 
-  world.addPlayer(ArtificialPlayer({
+  world.addPlayer(new HumanPlayer({
     id: socket.id,
-    act: Player.actFunctions.random,
-    energy: 0
   }));
 
   // send the clients id to the client itself.
   io.sockets.connected[socket.id].emit('socket-id', socket.id);
   start();
 
+  socket.on('world-pause', function () {
+    logger.info('world-pause');
+    stop();
+  });
+
   socket.on('world-restart', function () {
-    logger.log('world-restart');
+    logger.info('world-restart');
     var newWorld = getNewWorld();
 
     // Copy players from current world
-    for (var playerIndex in world.players) {
-      var player = world.players[playerIndex];
-      var newPlayer = ArtificialPlayer({
-        id: player.id,
-        act: Player.actFunctions.random,
-        energy: 0
-      });
-      newPlayer.ready();
-      newWorld.addPlayer(newPlayer);
-    }
+    world.players.forEach(function (player, iPlayer) {
+      if (player.isArtificial) {
+        var newArtificialPlayer = new ArtificialPlayer({
+          id: player.id,
+          act: Player.actFunctions.random
+        });
+        newArtificialPlayer.ready();
+        newWorld.addPlayer(newArtificialPlayer);
+      } else {
+        var newHumanPlayer = new HumanPlayer({
+          id: player.id
+        });
+        newWorld.addPlayer(newHumanPlayer);
+      }
+    });
+    // for (var playerIndex in world.players) {
+    //   var player = world.players[playerIndex];
+    //   if (player.isArtificial) {
+    //     var newPlayer = new ArtificialPlayer({
+    //       id: player.id,
+    //       act: Player.actFunctions.random
+    //     });
+    //     newPlayer.ready();
+    //     newWorld.addPlayer(newPlayer);
+    //   } else {
+    //     var newPlayer = new HumanPlayer({
+    //       id: player.id
+    //     });
+    //     newWorld.addPlayer(newPlayer);
+    //   }
+    // }
 
     world = newWorld;
   });
 
+  socket.on('player-act', function (playerId) {
+    logger.info('player-act', playerId, socket.id);
+    if (playerId !== socket.id) {
+      logger.info('player-act', 'Invalid request.');
+      return;
+    }
 
-  socket.on('player-ready', function () {
-    logger.log('player-ready', socket.id);
-    world.getPlayer(socket.id)
-      .ready();
+    var player = world.getPlayer(socket.id);
+    player.act();
+  });
+
+  socket.on('player-ready', function (playerId) {
+    logger.info('player-ready', playerId, socket.id);
+    if (playerId !== socket.id) {
+      logger.info('player-ready', 'Invalid request.');
+      return;
+    }
+
+    var player = world.getPlayer(socket.id);
+    player.ready();
   });
 
   socket.on('disconnect', function () {
-    logger.log('io', 'disconnected');
+    logger.info('io', 'disconnected');
     world.removePlayer(socket.id);
   });
 
   socket.on('error', function (exception) {
-    logger.log('SOCKET ERROR');
+    logger.info('SOCKET ERROR', exception);
     socket.destroy();
   });
 
 });
 var timerId;
-var FRAMEs_PER_SECOND = 1000 / 10;
+var FRAMES_PER_SECOND = 1000 / 5;
 
 function start() {
   if (timerId !== null && timerId !== undefined) {
@@ -113,10 +149,10 @@ function start() {
   }
 
   timerId = setInterval(function () {
-    // logger.log('emit', 'world', world.players.length);
+    // logger.info('emit', 'world', world.players.length);
     world.update();
     io.sockets.emit('world', world);
-  }, FRAMEs_PER_SECOND);
+  }, FRAMES_PER_SECOND);
 }
 
 function stop() {
@@ -131,7 +167,7 @@ var server = http.listen(3000, '127.0.0.1', function (x) {
     .address;
   var port = server.address()
     .port;
-  logger.log(process.env.NODE_ENV);
-  logger.log('listening on http://%s:%s', host, port);
+  logger.info(process.env.NODE_ENV);
+  logger.info('listening on http://%s:%s', host, port);
   open('http://' + host + ':' + port + '');
 });
