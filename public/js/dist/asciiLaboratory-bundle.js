@@ -80,6 +80,7 @@
 	        ), 
 	        React.createElement("div", null, 
 	          React.createElement("input", {onClick: this.props.onRemoveClick, type: "button", value: "Remove"}), 
+	          React.createElement("input", {onClick: this.props.onSaveClick, type: "button", value: "Save"}), 
 	          sprite
 	        )
 	      )
@@ -94,12 +95,19 @@
 	      iteration: 0,
 	// intervalId: -1,
 	      interval: 100,
-	      isActive: false
+	      isUpdating: false
 	    };
+	  },
+	  componentWillMount: function() {
+	    console.log('componentWillMount');
+	    var storedSprites = this._getStoredSprites();
+	    this.setState({
+	      sprites: storedSprites
+	    });
 	  },
 	  componentDidMount: function() {
 	    console.log('componentDidMount');
-	    this._setInterval(1000);
+	    this._update();
 	  },
 	  onAddClick: function(e) {
 	    console.log('onAddClick');
@@ -108,6 +116,10 @@
 	  onRemoveClick: function(sprite) {
 	    console.log('onRemoveClick');
 	    this._removeSprite(sprite);
+	  },
+	  onSaveClick: function(sprite) {
+	    console.log('onSaveClick');
+	    this._saveSprite(sprite);
 	  },
 	  onSpriteInputBlur: function(e) {
 	    console.log('onSpriteInputBlur');
@@ -118,14 +130,15 @@
 	    this._setInterval(React.findDOMNode(this.refs.intervalInput).value);
 	  },
 	  _update: function() {
-	    this._increment();
-	    if (!this.state.isActive) {
+	    if (!this.state.isUpdating) {
+
 	      this.setState({
-	        isActive: true
+	        isUpdating: true
 	      });
 	      window.setTimeout((function() {
+	        this._increment();
 	        this.setState({
-	          isActive: false
+	          isUpdating: false
 	        });
 	        this._update();
 	      }).bind(this), this.state.interval);
@@ -144,18 +157,49 @@
 	  },
 	  _addSprite: function(sprite) {
 	    var sprites = this.state.sprites
-	    sprites.push(sprite);
-	    this.setState({
-	      sprites: sprites
-	    });
+	    var spriteAlreadyExists = sprites.indexOf(sprite) > -1;
+	    if (!spriteAlreadyExists) {
+	      sprites.push(sprite);
+	      this.setState({
+	        sprites: sprites
+	      });
+	    }
 	  },
 	  _removeSprite: function(sprite) {
+	// Remove from session sprites
 	    var sprites = this.state.sprites;
 	    var spriteIndex = sprites.indexOf(sprite);
-	    sprites.splice(spriteIndex, 1)
+	    sprites.splice(spriteIndex, 1);
 	    this.setState({
 	      sprites: sprites
 	    });
+
+	// Remove from stored sprites
+	    var storedSprites = this._getStoredSprites();
+	    var storedSpriteIndex = storedSprites.indexOf(sprite);
+	    if (storedSpriteIndex > -1) {
+	      storedSprites.splice(storedSpriteIndex, 1)
+	      this.props.storage.setItem('sprites', JSON.stringify(storedSprites));
+	    }
+	  },
+	  _getStoredSprites: function() {
+	    console.log('_getStoredSprites');
+	    var sprites;
+	    var unparsedSpritesString = this.props.storage.getItem('sprites');
+	    try {
+	      sprites = JSON.parse(unparsedSpritesString);
+	    } finally {
+	      return sprites || [];
+	    }
+	  },
+	  _saveSprite: function(sprite) {
+	    console.log('_saveSprite', sprite);
+	    var storedSprites = this._getStoredSprites();
+	    var storedSpriteAlreadyExists = storedSprites.indexOf(sprite) > -1;
+	    if (!storedSpriteAlreadyExists) {
+	      storedSprites.push(sprite);
+	      this.props.storage.setItem('sprites', JSON.stringify(storedSprites));
+	    }
 	  },
 	  _increment: function() {
 	    this.setState({
@@ -167,7 +211,7 @@
 	    var _this = this;
 	    var sprites = this.state.sprites.map(function(sprite, spriteIndex) {
 	      return (
-	        React.createElement(Sprite, {iteration: iteration, key: spriteIndex, onRemoveClick: _this.onRemoveClick.bind(_this, sprite), value: sprite})
+	        React.createElement(Sprite, {iteration: iteration, key: spriteIndex, onRemoveClick: _this.onRemoveClick.bind(_this, sprite), onSaveClick: _this.onSaveClick.bind(_this, sprite), value: sprite})
 	      );
 	    });
 
@@ -194,7 +238,7 @@
 	        }}, 
 	          React.createElement("input", {onClick: this.onAddClick, type: "button", value: "Add"}), 
 	          React.createElement("input", {onBlur: this.onSpriteInputBlur, ref: "spriteInput", type: "text"}), 
-	          React.createElement("input", {max: "1000", min: "10", name: "interval", onChange: this.onIntervalChange, ref: "intervalInput", step: "10", type: "range", value: this.state.interval}), 
+	          React.createElement("input", {max: "1000", min: "10", name: "interval", onChange: this.onIntervalChange, ref: "intervalInput", step: "10", type: "range", defaultValue: this.state.interval}), 
 	          React.createElement("div", null, 
 	            sprites
 	          )
@@ -204,7 +248,7 @@
 	  }
 	});
 
-	React.render(React.createElement(Display, null), document.getElementById('ascii-lib-input'));
+	React.render(React.createElement(Display, {storage: window.localStorage}), document.getElementById('ascii-lib-input'));
 
 
 /***/ }

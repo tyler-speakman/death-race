@@ -34,6 +34,7 @@ var Sprite = React.createClass({
         </div>
         <div>
           <input onClick={this.props.onRemoveClick} type="button" value="Remove"/>
+          <input onClick={this.props.onSaveClick} type="button" value="Save"/>
           {sprite}
         </div>
       </div>
@@ -48,12 +49,19 @@ var Display = React.createClass({
       iteration: 0,
 // intervalId: -1,
       interval: 100,
-      isActive: false
+      isUpdating: false
     };
+  },
+  componentWillMount: function() {
+    console.log('componentWillMount');
+    var storedSprites = this._getStoredSprites();
+    this.setState({
+      sprites: storedSprites
+    });
   },
   componentDidMount: function() {
     console.log('componentDidMount');
-    this._setInterval(1000);
+    this._update();
   },
   onAddClick: function(e) {
     console.log('onAddClick');
@@ -62,6 +70,10 @@ var Display = React.createClass({
   onRemoveClick: function(sprite) {
     console.log('onRemoveClick');
     this._removeSprite(sprite);
+  },
+  onSaveClick: function(sprite) {
+    console.log('onSaveClick');
+    this._saveSprite(sprite);
   },
   onSpriteInputBlur: function(e) {
     console.log('onSpriteInputBlur');
@@ -72,14 +84,15 @@ var Display = React.createClass({
     this._setInterval(React.findDOMNode(this.refs.intervalInput).value);
   },
   _update: function() {
-    this._increment();
-    if (!this.state.isActive) {
+    if (!this.state.isUpdating) {
+
       this.setState({
-        isActive: true
+        isUpdating: true
       });
       window.setTimeout((function() {
+        this._increment();
         this.setState({
-          isActive: false
+          isUpdating: false
         });
         this._update();
       }).bind(this), this.state.interval);
@@ -98,18 +111,49 @@ var Display = React.createClass({
   },
   _addSprite: function(sprite) {
     var sprites = this.state.sprites
-    sprites.push(sprite);
-    this.setState({
-      sprites: sprites
-    });
+    var spriteAlreadyExists = sprites.indexOf(sprite) > -1;
+    if (!spriteAlreadyExists) {
+      sprites.push(sprite);
+      this.setState({
+        sprites: sprites
+      });
+    }
   },
   _removeSprite: function(sprite) {
+// Remove from session sprites
     var sprites = this.state.sprites;
     var spriteIndex = sprites.indexOf(sprite);
-    sprites.splice(spriteIndex, 1)
+    sprites.splice(spriteIndex, 1);
     this.setState({
       sprites: sprites
     });
+
+// Remove from stored sprites
+    var storedSprites = this._getStoredSprites();
+    var storedSpriteIndex = storedSprites.indexOf(sprite);
+    if (storedSpriteIndex > -1) {
+      storedSprites.splice(storedSpriteIndex, 1)
+      this.props.storage.setItem('sprites', JSON.stringify(storedSprites));
+    }
+  },
+  _getStoredSprites: function() {
+    console.log('_getStoredSprites');
+    var sprites;
+    var unparsedSpritesString = this.props.storage.getItem('sprites');
+    try {
+      sprites = JSON.parse(unparsedSpritesString);
+    } finally {
+      return sprites || [];
+    }
+  },
+  _saveSprite: function(sprite) {
+    console.log('_saveSprite', sprite);
+    var storedSprites = this._getStoredSprites();
+    var storedSpriteAlreadyExists = storedSprites.indexOf(sprite) > -1;
+    if (!storedSpriteAlreadyExists) {
+      storedSprites.push(sprite);
+      this.props.storage.setItem('sprites', JSON.stringify(storedSprites));
+    }
   },
   _increment: function() {
     this.setState({
@@ -121,7 +165,7 @@ var Display = React.createClass({
     var _this = this;
     var sprites = this.state.sprites.map(function(sprite, spriteIndex) {
       return (
-        <Sprite iteration={iteration} key={spriteIndex} onRemoveClick={_this.onRemoveClick.bind(_this, sprite)} value={sprite}></Sprite>
+        <Sprite iteration={iteration} key={spriteIndex} onRemoveClick={_this.onRemoveClick.bind(_this, sprite)} onSaveClick={_this.onSaveClick.bind(_this, sprite)} value={sprite}></Sprite>
       );
     });
 
@@ -148,7 +192,7 @@ var Display = React.createClass({
         }}>
           <input onClick={this.onAddClick} type="button" value="Add"/>
           <input onBlur={this.onSpriteInputBlur} ref="spriteInput" type="text"/>
-          <input max="1000" min="10" name="interval" onChange={this.onIntervalChange} ref="intervalInput" step="10" type="range" value={this.state.interval}/>
+          <input max="1000" min="10" name="interval" onChange={this.onIntervalChange} ref="intervalInput" step="10" type="range" defaultValue={this.state.interval}/>
           <div>
             {sprites}
           </div>
@@ -158,4 +202,4 @@ var Display = React.createClass({
   }
 });
 
-React.render(<Display/>, document.getElementById('ascii-lib-input'));
+React.render(<Display storage={window.localStorage}/>, document.getElementById('ascii-lib-input'));
