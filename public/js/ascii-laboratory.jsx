@@ -1,3 +1,5 @@
+/** @jsx React.DOM **/
+/*jslint node: true */
 var Sprite = React.createClass({
   render: function() {
 
@@ -7,12 +9,17 @@ var Sprite = React.createClass({
     var DOUBLE_CURLY_REGEX = /\{\{(.*?)\}\}+/gi;
     var SPACE_REGEX = /\ /gi;
     if (DOUBLE_CURLY_REGEX.test(value)) {
+// Split frames on double-curly-bracket components (i.e., "{{a}}{{b}}{{c}}{{..}}")
       values = value.split(DOUBLE_CURLY_REGEX);
     } else if (SPACE_REGEX.test(value)) {
+// Split frames on spaces
       values = value.split(SPACE_REGEX);
     } else {
+// Split frames on each character
       values = value.split('');
     }
+
+// Remove empty characters
     values = values.filter(function(value, key) {
       return value !== '';
     });
@@ -39,8 +46,9 @@ var Display = React.createClass({
     return {
       sprites: [],
       iteration: 0,
-      intervalId: -1,
-      interval: 1000
+// intervalId: -1,
+      interval: 100,
+      isActive: false
     };
   },
   componentDidMount: function() {
@@ -63,14 +71,30 @@ var Display = React.createClass({
     console.log('onIntervalChange', React.findDOMNode(this.refs.intervalInput).value);
     this._setInterval(React.findDOMNode(this.refs.intervalInput).value);
   },
+  _update: function() {
+    this._increment();
+    if (!this.state.isActive) {
+      this.setState({
+        isActive: true
+      });
+      window.setTimeout((function() {
+        this.setState({
+          isActive: false
+        });
+        this._update();
+      }).bind(this), this.state.interval);
+    }
+  },
   _setInterval: function(interval) {
     console.log('_setInterval', interval, this.state.intervalId);
-    window.clearInterval(this.state.intervalId);
-    var intervalId = window.setInterval(this._increment, this.state.interval);
+// window.clearInterval(this.state.intervalId);
+// var intervalId = window.setInterval(this._update, this.state.interval);
+// window.setTimeout(this._update, this.state.interval);
     this.setState({
-      interval: interval,
-      intervalId: intervalId
+      interval: interval
+// intervalId: intervalId,
     });
+    this._update();
   },
   _addSprite: function(sprite) {
     var sprites = this.state.sprites
@@ -122,8 +146,8 @@ var Display = React.createClass({
           height: '30px',
           lineHeight: '30px'
         }}>
-          <input onBlur={this.onSpriteInputBlur} ref="spriteInput" type="text"/>
           <input onClick={this.onAddClick} type="button" value="Add"/>
+          <input onBlur={this.onSpriteInputBlur} ref="spriteInput" type="text"/>
           <input max="1000" min="10" name="interval" onChange={this.onIntervalChange} ref="intervalInput" step="10" type="range" value={this.state.interval}/>
           <div>
             {sprites}

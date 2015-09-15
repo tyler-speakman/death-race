@@ -3,7 +3,7 @@ var path = require('path');
 module.exports = {
   entry: {
     main: "./public/js/main.jsx",
-    asciiLib: "./public/js/ascii-lib.jsx"
+    asciiLaboratory: "./public/js/ascii-laboratory.jsx"
   },
   output: {
     path: __dirname,
@@ -26,6 +26,5 @@ module.exports = {
   },
   resolve: {
     extensions: ['', '.js', '.jsx']
-  },
-  watch: true
+  }
 };
