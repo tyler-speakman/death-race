@@ -67,7 +67,7 @@ var PlayerProgressDisplay = React.createClass({
     var playerPositionBeyondDeathWallDisplay = "";
     if (playerPositionBeyondDeathWall > 0) {
 //var PLAYER_CHARACTERS = "∙•●。☉◎○◎☉。●•";//ｏＯ
-      var PLAYER_CHARACTERS = "\u{26a9}\u{26aa}\u{26ac}\u{26ad}\u{26ae}\u{26af}\u{26ae}\u{26ad}"; //"︹︷︹︺︸︺";
+      var PLAYER_CHARACTERS = "ᆺ︹︷︹ᅳ︺︸︺"; // "\u{26a9}\u{26aa}\u{26ac}\u{26ad}\u{26ae}\u{26af}\u{26ae}\u{26ad}"; //"︹︷︹︺︸︺";
       var playerCharacterIndex = (iteration) % PLAYER_CHARACTERS.length;
       var playerDisplay = PLAYER_CHARACTERS[playerCharacterIndex];
       playerPositionBeyondDeathWallDisplay = NON_BREAKING_SPACE_CHARACTER.repeat(Math.max(0, playerPositionBeyondDeathWall - playerDisplay.length)) + playerDisplay;
@@ -107,8 +107,13 @@ var PlayerProgressDisplay = React.createClass({
       deathWallPositionDisplay = deathWallPositionDisplay.substring(Math.abs(offsetOfOptimalDisplayLength), deathWallPosition);
     }
 
+    var classes = React.addons.classSet({
+      'player-progress-position-display': true,
+      'is-local': this.props.isLocal
+    });
+
     return (
-      <span className="player-progress-position-display">
+      <span className={classes}>
         <span className="death-wall-position-display">{deathWallPositionDisplay}</span>
         <span className="player-position-beyond-death-wall">{playerPositionBeyondDeathWallDisplay}</span>
       </span>
@@ -174,19 +179,20 @@ var WorldProgressDisplay = React.createClass({
         }
       };
 
-      var positionRankFlag = -normalizeAndCompare(playerA.position, playerB.position);
+      var isLocalFlag = -normalizeAndCompare(worldProgressDisplay.props.socketId === playerA.id, worldProgressDisplay.props.socketId === playerB.id);
       var isLivingRankFlag = -normalizeAndCompare(playerA.isLiving, playerB.isLiving);
+      var positionRankFlag = -normalizeAndCompare(playerA.position, playerB.position);
       var idRankFlag = normalizeAndCompare(playerA.id, playerB.id);
 
 // console.log('isLivingRankFlag', isLivingRankFlag, 'positionRankFlag', positionRankFlag, 'idRankFlag', idRankFlag, 'overall rank', (4 * isLivingRankFlag) + (2 * positionRankFlag) + (1 * idRankFlag));
 
-      return (4 * isLivingRankFlag) + (2 * positionRankFlag) + (1 * idRankFlag);
+      return (8 * isLocalFlag) + (4 * isLivingRankFlag) + (2 * positionRankFlag) + (1 * idRankFlag);
     });
     var playerIndex = sortedPlayers.findIndex(function(player) {
       return worldProgressDisplay.props.socketId === player.id;
     });
 
-    var DISPLAY_RANGE = 2;
+    var DISPLAY_RANGE = 10; //2;
     var sortedPlayersSubgroup = sortedPlayers.filter(function(player, index) {
       return Math.abs(playerIndex - index) <= DISPLAY_RANGE;
     });
