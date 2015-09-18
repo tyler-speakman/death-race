@@ -1,5 +1,9 @@
 /** @jsx React.DOM **/
 /*jslint node: true */
+
+var punycode = require('punycode');
+var _ = require('highland');
+
 var Sprite = React.createClass({
   render: function() {
 
@@ -41,13 +45,11 @@ var Sprite = React.createClass({
     );
   }
 });
-
-var Display = React.createClass({
+var SpriteLab = React.createClass({
   getInitialState: function() {
     return {
       sprites: [],
       iteration: 0,
-// intervalId: -1,
       interval: 100,
       isUpdating: false
     };
@@ -73,19 +75,15 @@ var Display = React.createClass({
   },
   onSaveClick: function(sprite) {
     console.log('onSaveClick');
-    this._saveSprite(sprite);
-  },
-  onSpriteInputBlur: function(e) {
-    console.log('onSpriteInputBlur');
-// this._addSprite(e.target.value);
+    this._storeSprite(sprite);
   },
   onIntervalChange: function(e) {
-    console.log('onIntervalChange', React.findDOMNode(this.refs.intervalInput).value);
-    this._setInterval(React.findDOMNode(this.refs.intervalInput).value);
+    var interval = React.findDOMNode(this.refs.intervalInput).value;
+    console.log('onIntervalChange', interval);
+    this._setInterval(interval);
   },
   _update: function() {
     if (!this.state.isUpdating) {
-
       this.setState({
         isUpdating: true
       });
@@ -100,12 +98,8 @@ var Display = React.createClass({
   },
   _setInterval: function(interval) {
     console.log('_setInterval', interval, this.state.intervalId);
-// window.clearInterval(this.state.intervalId);
-// var intervalId = window.setInterval(this._update, this.state.interval);
-// window.setTimeout(this._update, this.state.interval);
     this.setState({
       interval: interval
-// intervalId: intervalId,
     });
     this._update();
   },
@@ -146,8 +140,8 @@ var Display = React.createClass({
       return sprites || [];
     }
   },
-  _saveSprite: function(sprite) {
-    console.log('_saveSprite', sprite);
+  _storeSprite: function(sprite) {
+    console.log('_storeSprite', sprite);
     var storedSprites = this._getStoredSprites();
     var storedSpriteAlreadyExists = storedSprites.indexOf(sprite) > -1;
     if (!storedSpriteAlreadyExists) {
@@ -192,7 +186,7 @@ var Display = React.createClass({
         }}>
           <input onClick={this.onAddClick} type="button" value="Add"/>
           <input onBlur={this.onSpriteInputBlur} ref="spriteInput" type="text"/>
-          <input max="1000" min="10" name="interval" onChange={this.onIntervalChange} ref="intervalInput" step="10" type="range" defaultValue={this.state.interval}/>
+          <input defaultValue={this.state.interval} max="1000" min="10" name="interval" onChange={this.onIntervalChange} ref="intervalInput" step="10" type="range"/>
           <div>
             {sprites}
           </div>
@@ -202,4 +196,69 @@ var Display = React.createClass({
   }
 });
 
-React.render(<Display storage={window.localStorage}/>, document.getElementById('ascii-lib-input'));
+var AsciiLib = React.createClass({
+  getInitialState: function() {
+    return {
+      asciiCharacters: []
+    };
+  },
+// componentDidMount: function() {
+//   console.log('componentDidMount');
+//   window.setInterval((function() {
+//     var asciiCharacters = this.state.asciiCharacters;
+//     var indexOfAsciiCharacters = asciiCharacters.length;
+//     for (var i = 0; i < 100; i++) {
+//       var key = indexOfAsciiCharacters + i;
+//       if (key < this.props.numberOfCharacters) {
+//         var character = punycode.ucs2.encode([key]).normalize() || "&nbsp;"; //String.fromCharCode(key) || "&nbsp;";
+//         asciiCharacters[key] = character;
+//         this.setState({
+//           asciiCharacters: asciiCharacters
+//         });
+//       }
+//     }
+//   }).bind(this), 100);
+// },
+  renderWithReactComponents: function() {
+    var NUMBER_OF_CHARACTERS = this.props.numberOfCharacters; //100000;
+    var renderedAsciiCharacters = [];
+    for (var i = 0; i < NUMBER_OF_CHARACTERS; i++) {
+      var key = i;
+      var character = punycode.ucs2.encode([key]).normalize() || "&nbsp;"; //String.fromCharCode(key) || "&nbsp;";
+      var hexKey = key.toString(16);
+      renderedAsciiCharacters[key] = (
+        <span key={key} title={`${key}, \\u{${hexKey}}`}>{character}</span>
+      );
+    }
+
+    return (
+      <div>
+        {renderedAsciiCharacters}
+      </div>
+    );
+  },
+  renderWithHtmlTemplate: function() {
+    var renderedAsciiCharacters = new Array(this.props.numberOfCharacters);
+    var key = this.props.numberOfCharacters; //100000;
+    while(key--) {
+      var character = punycode.ucs2.encode([key]).normalize() || "&nbsp;";
+      var hexKey = key.toString(16);
+      renderedAsciiCharacters[key] = (`<span title='${key}, \\u{${hexKey}}'>${character}</span >`);
+    }
+
+    return (
+      <div dangerouslySetInnerHTML={{
+        __html: renderedAsciiCharacters.join('')
+      }}/>
+    );
+  },
+  render: function() {
+    return this.renderWithHtmlTemplate();
+  }
+});
+
+React.render(<SpriteLab storage={window.localStorage}/>, document.getElementById('ascii-laboratory'));
+React.addons.Perf.start();
+React.render(<AsciiLib numberOfCharacters={10000}/>, document.getElementById('ascii-library'));
+React.addons.Perf.stop()
+React.addons.Perf.printInclusive()
